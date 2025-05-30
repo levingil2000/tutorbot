@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AI Tutor Session - {{ data.topic }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+<div class="container">
+  <h1>AI Tutor Session on: "{{ data.topic }}"</h1>
+  <div class="chat-box">
+    {% for message in chat %}
+      <div class="{{ 'user-msg' if message.role=='user' else 'ai-msg' }}">
+        <p>{{ message.content|safe }}</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="chat-form">
+    <input type="text" name="message" placeholder="Type your message..." autocomplete="off" required />
+    <button type="submit">Send</button>
+  </form>
+</div>
+</body>
+</html>

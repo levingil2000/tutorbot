@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Customize Objectives & Assessment</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+<div class="container">
+  <h1>Customize Your Lesson for: "{{ topic }}"</h1>
+
+  <form method="post">
+    <h3>Learning Objectives (Edit as needed)</h3>
+    {% for obj in objectives %}
+      <input type="text" name="objectives" value="{{ obj }}" required /><br />
+    {% endfor %}
+    <button type="button" onclick="addObjective()">Add Objective</button>
+
+    <h3>Assessment Questions (one per line)</h3>
+    <textarea name="assessment_questions" rows="5" placeholder="Enter questions...">{{ assessment_questions }}</textarea>
+
+    <br /><br />
+    <button type="submit">Save & Start Tutor Session</button>
+  </form>
+</div>
+
+<script>
+function addObjective() {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.name = 'objectives';
+  input.required = true;
+  document.querySelector('form').insertBefore(input, document.querySelector('button[type="button"]'));
+}
+</script>
+</body>
+</html>
