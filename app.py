@@ -25,7 +25,7 @@ serializer = URLSafeSerializer(app.config['SECRET_KEY'])
 def generate_objectives(topic):
     try:
         # Initialize the Gemini model
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         # Generate objectives
         response = model.generate_content(f"Generate 3-5 clear learning objectives for a lesson about '{topic}'.")
