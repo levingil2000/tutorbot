@@ -11,8 +11,8 @@
 
   <form method="post">
     <h3>Learning Objectives (Edit as needed)</h3>
-    {% for obj in objectives %}
-      <input type="text" name="objectives" value="{{ obj }}" required /><br />
+    {% for objective in objectives %}
+      <input type="text" name="objectives" value="{{ objective }}">
     {% endfor %}
     <button type="button" onclick="addObjective()">Add Objective</button>
 
