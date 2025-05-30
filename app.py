@@ -4,62 +4,66 @@ import os
 from dotenv import load_dotenv
 from itsdangerous import URLSafeSerializer
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
-# Configure your secret keys
-FLASK_SECRET_KEY = os.getenv("FLASKSECRETKEY", "fallback-secret-key")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Configure Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-pro")
 
-# Setup OpenAI API key
-genai.configure(api_key=GEMINI_API_KEY)
-
-# Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = FLASK_SECRET_KEY
+app.secret_key = os.getenv("FLASKSECRETKEY")  # Set this in your .env file
 
-# Setup itsdangerous serializer for secure token generation
-serializer = URLSafeSerializer(app.config['SECRET_KEY'])
+# -------------------------------
+# Dummy homepage just for example
+@app.route("/", methods=["GET", "POST"])
+def home():
+    if request.method == "POST":
+        topic = request.form.get("topic")
 
-# Helper function to ask Gemini to generate objectives based on topic
-def generate_objectives(topic):
-    try:
-        # Initialize the Gemini model
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        
-        # Generate objectives
-        response = model.generate_content(f"Generate 3-5 clear learning objectives for a lesson about '{topic}'.")
+        # Call Gemini to generate objectives for the topic
+        prompt = f"Generate 3 to 5 clear and measurable learning objectives for a lesson on: {topic}"
+        response = model.generate_content(prompt)
 
-        return response.text
-    except Exception as e:
-        return f"Error: {e}"
+        # Process Gemini response into a clean list
+        raw_objectives = response.text.strip().split("\n")
+        cleaned_objectives = [line.lstrip("-•0123456789. ").strip() for line in raw_objectives if line.strip()]
 
-# Route: home page for entering a topic
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        topic = request.form['topic']
-        # Generate objectives from Gemini
-        objectives = generate_objectives(topic)
+        session["objectives"] = cleaned_objectives
+        return redirect(url_for("review"))
 
-        # Save data into session
-        session['topic'] = topic
-        session['objectives'] = objectives
+    return render_template("home.html")
 
-        # Create a secure token to access the tutor session
-        token = serializer.dumps({'topic': topic})
-        session['token'] = token
-
-        return redirect(url_for('review'))
-    return render_template('index.html')
-
-# Route: review the AI-generated objectives
-@app.route('/review')
+# -------------------------------
+# Review page to view and refine objectives using an AI prompt
+@app.route("/review", methods=["GET"])
 def review():
-    topic = session.get('topic')
-    objectives = session.get('objectives')
-    token = session.get('token')
-    return render_template('review.html', topic=topic, objectives=objectives, token=token)
+    objectives = session.get("objectives", [])
+    return render_template("review.html", objectives=objectives)
+
+# -------------------------------
+# Handles AI refinement based on teacher instruction
+@app.route("/refine_objectives", methods=["POST"])
+def refine_objectives():
+    instruction = request.form.get("instruction")
+    old_objectives = session.get("objectives", [])
+
+    # Compose prompt for Gemini
+    full_prompt = (
+        "Here are some learning objectives:\n" +
+        "\n".join(f"- {obj}" for obj in old_objectives) +
+        f"\n\nBased on this instruction: '{instruction}', rewrite or modify the objectives."
+    )
+
+    # AI response
+    response = model.generate_content(full_prompt)
+    new_objectives = response.text.strip().split("\n")
+
+    # Clean up
+    cleaned = [obj.lstrip("-•0123456789. ").strip() for obj in new_objectives if obj.strip()]
+    session["objectives"] = cleaned
+
+    return redirect(url_for("review"))
 
 # Route: start the tutor session (placeholder)
 @app.route('/tutor/<token>')
