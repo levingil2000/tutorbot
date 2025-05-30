@@ -72,6 +72,7 @@ def tutor(token):
     except Exception as e:
         return f"Invalid or expired token: {e}"
 
-# Run app locally
+# Run app
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000)) # Get port from environment, default to 5000
+    app.run(host='0.0.0.0', port=port, debug=True) # debug=True is okay for dev, but set to False for production
